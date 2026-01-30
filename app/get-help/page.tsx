@@ -14,11 +14,35 @@ import { useState } from "react"
 
 export default function GetHelpPage() {
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
-    // Form submission logic would go here
+    setLoading(true)
+
+    const formData = new FormData(e.target as HTMLFormElement)
+
+    const payload = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      issueType: formData.get("issue-type"),
+      description: formData.get("description"),
+      urgency: formData.get("urgency"),
+    }
+
+    const res = await fetch("/api/help", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+
+    setLoading(false)
+
+    if (res.ok) {
+      setSubmitted(true)
+    } else {
+      alert("Failed to send request. Try again.")
+    }
   }
 
   return (
@@ -87,7 +111,7 @@ export default function GetHelpPage() {
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="name">First Name (Optional)</Label>
-                        <Input id="name" placeholder="How should we address you?" />
+                        <Input id="name" name="name" placeholder="How should we address you?" />
                       </div>
 
                       <div className="space-y-2">
@@ -96,6 +120,7 @@ export default function GetHelpPage() {
                         </Label>
                         <Input
                           id="email"
+                          name="email"
                           type="email"
                           placeholder="your.email@example.com"
                           required
@@ -106,7 +131,7 @@ export default function GetHelpPage() {
                         <Label htmlFor="issue-type">
                           Type of Issue <span className="text-destructive">*</span>
                         </Label>
-                        <Select required>
+                        <Select name="issue-type" required>
                           <SelectTrigger id="issue-type">
                             <SelectValue placeholder="Select the type of violation" />
                           </SelectTrigger>
@@ -128,6 +153,7 @@ export default function GetHelpPage() {
                         </Label>
                         <Textarea
                           id="description"
+                          name="description"
                           placeholder="Please describe what happened in a few sentences. You do not need to include sensitive personal details."
                           rows={5}
                           required
@@ -142,7 +168,7 @@ export default function GetHelpPage() {
                         <Label htmlFor="urgency">
                           Urgency Level <span className="text-destructive">*</span>
                         </Label>
-                        <Select required>
+                        <Select name="urgency" required>
                           <SelectTrigger id="urgency">
                             <SelectValue placeholder="How urgent is your situation?" />
                           </SelectTrigger>
@@ -159,8 +185,8 @@ export default function GetHelpPage() {
                         </Select>
                       </div>
 
-                      <Button type="submit" className="w-full" size="lg">
-                        Submit Request
+                      <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                        {loading ? "Sending..." : "Submit Request"}
                       </Button>
                     </form>
                   )}
